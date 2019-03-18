@@ -1,0 +1,133 @@
+---
+title: "MethylCal: Bayesian Calibration of Methylation Levels"
+author: "Leonardo Bottolo"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{MethylCal}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+This package allows the calibration of methylation levels using **MethylCal**, a Bayesian calibration tool based on INLA ([Rue et al., 2009](https://doi.org/10.1111/j.1467-9868.2008.00700.x)). The package permits the visualisation of the calibration curve derived from standard controls with known methylation percentages for a selected assay. It also allows the correction of the methylation levels in case and control samples. If cases are provided, MethylCal performs a differential methylation test to detect hyper- and hypo-methylated samples. Besides MethylCal, the package also includes the calibration and the correction provided by two alternative methods ([Warnecke et al., 1997](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC147052/); [Moskalev et al., 2011](https://www.ncbi.nlm.nih.gov/pubmed/21486748)).
+
+This documentation includes a synthetic description of the package and the code required to replicate the plots presented in Ochoa et. (2019).
+
+
+## Structure of the package
+
+There are two  data sets included in the package:
+
+1. The first contains methylation data on patients potentially affected by the Beckwith-Wiedemann syndrome (BWS). Human genomic control DNA, with five distinct actual methylation percentages (0%, 25%, 50%, 75% and 100%), 15 healthy controls DNA as well as 18 patients DNA are included. Full description of the BWS data set can be accessed by typing
+
+        help(BWS_data)
+
+1. The second data set includes eight NFkB-related genes in patients with celiac disease
+([Fernandez-Jimenez et al., 2012](https://www.ncbi.nlm.nih.gov/pubmed/23154537);
+[Fernandez-Jimenez et al., 2014](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3919015/)). Human genomic control DNA measured at eight distinct actual methylation percentages (0%, 12.5%, 25%, 37.5%, 50%, 62.5%, 87.5% and 100%), 13 controls (C), 17 celiac patients at the time of diagnosis (D) and the same patients after two years of treatment with a gluten-free diet (T) are included. Further information can be obtained from
+
+        help(Celiac_data)
+
+The package also contains two utility functions `Formatting` and `TableFormatting`. The former transforms the data into a suitable data format for **MethylCal** analysis while the latter converts the output obtained from the calibration and correction functions (see below) into the same data format used in the uploaded data set. Further details are presented in
+
+    help(Formatting)
+    help(TableFormatting)
+
+Several functions that can be used to explore and analyse the data:
+
+1. The primary function for data exploration is `ExploratoryPlot`. It visualises the methylation levels of the standard control samples. Several plots are generated stratifying the methylation levels with respect to the actual methylation percentages (AMP), the CpGs position or both. For details, see
+
+        help(ExploratoryPlot)
+
+1. `WarneckeCalibrationPlot` performs the calibration of the standard control samples using the method presented in [Warnecke et al. (1997)] (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC147052/). Similarly to other functions that perform the same task, several plots are generated. In particular, to check the goodness of the estimated calibration curve, a scatterplot depicts the corrected methylation levels at each AMP for all CpGs within a targeted Differential Methylated Region (DMR)/CpG island/gene. Details are presented in
+
+        help(WarneckeCalibrationPlot)
+
+1. Visualisation of Moskalev 's calibration ([Moskalev et al., 2011](https://www.ncbi.nlm.nih.gov/pubmed/21486748)) of the standard controls experiment is obtained by using the function `MoskalevCalibrationPlot`. The on-line help
+
+        help(MoskalevCalibrationPlot)
+
+    also provides instructions about how to plot the results of the two calibration tools (extension of [Warnecke et al. (1997)] (https://www.ncbi.nlm.nih.gov/pmc/articles/PMC147052/) method and cubic polynomial regression) presented in [Moskalev et al. (2011)] (https://www.ncbi.nlm.nih.gov/pubmed/21486748).
+
+1. MethylCal as presented in Ochoa et. (2019) is implemented in the function `MethylCalCalibrationPlot`. Besides the calibration plots, several goodness of fitness measures are also provided for each estimated model, including mlik = marginal likelihood, DIC = Deviance Information Criteria and RSS = Residual Sum of Squares. The function `MethylCalCalibrationOutlierPlot` includes the detection of outliers, where the models are refitted without the detected outliers. Plots are presented with and without outliers. Further information is available in
+
+        help(MethylCalCalibrationPlot)
+        help(MethylCalCalibrationOutlierPlot)
+
+1. The main functions for the correction of the methylation levels in case and control samples are `MoskalevCorrection` and `MethycalCorrection`. Both functions returns the corrected methylation levels for the samples analysed. If case samples are provided, both functions perform a differential methylation test (at a specified confidence level) to detect hyper- and hypo-methylated cases. For details, see
+
+        help(MoskalevCorrection)
+        help(MethycalCorrection)
+
+
+## How to generate the plots presented in Ochoa et. (2019)
+
+Once the **MethylCal** package is loaded
+
+    library(MethylCal)
+
+figures presented in Ochoa et. (2019) are obtained using the following commands:
+
+1. **Figure 1** A&B are produced by typing
+
+        data(BWS_data)
+        AMP = c(0, 25, 50, 75, 100)
+        data = Formatting(BWS_data, AMP = AMP)
+        MoskalevCalibrationPlot(data, Target = "KCNQ1OT1")
+        MoskalevCalibrationPlot(data, Target = "H19/IGF2")
+
+     and selecting the 1st, 2nd and 3rd plot for each targeted DMR.
+
+1. **Figure 2** is generated with
+
+        MethylCalCalibrationOutlierPlot(data, Target = "KCNQ1OT1")
+        MethylCalCalibrationOutlierPlot(data, Target = "H19/IGF2")
+
+    Since MethylCal' s detects two outliers in the targeted DMR H19/IGF2, running the analysis for the this DMR may take several minutes.
+
+1. To generate **Figure 3** A&B, first the case/control samples need to be loaded
+
+        data = Formatting(BWS_data, AMP = AMP, n_Control = 15, n_Case = 18)
+
+    then
+
+        MoskalevCorrection(data, Target = "KCNQ1OT1", n_Control = 15, n_Case = 18)
+
+    Similarly, for **Figure 3** C&D
+
+        MethylCalCorrection(data, Target = "KCNQ1OT1", n_Control = 15, n_Case = 18)
+
+    Note that for both, `MoskalevCorrection` and `MethycalCorrection` functions, the list of hyper- and hypo-methylated cases detected by a differential methylation test (at a specified confidence level) are printed on the screen.
+
+1. To generate **Figure 4**, the commands are
+
+        corr_data = MoskalevCorrection(data, Target = "H19/IGF2", n_Control = 15, n_Case = 18)
+        corr_data = MethylCalCorrection(data, Target = "H19/IGF2", n_Control = 15, n_Case = 18)
+
+   The functions' output `corr_data`, can be used to generate a table of the corrected methylation levels for both case and control samples with the same data format used in the uploaded data set using the function
+
+       output_data = TableFormatting(corr_data, n_Control = 15, n_Case = 18)
+       
+1. Finally, in **Figure 5**, first the celiac data set needs to be loaded, specifying the new AMP list and formatting the data for the analysis, and including the number of case and control samples in the data set
+
+       data(Celiac_data)
+       AMP = c(0, 12.5, 25, 37.5, 50, 62.5, 87.5, 100)
+       data = Formatting(Celiac_data, AMP = AMP, n_Control = 13, n_Case = 34)
+       
+    before running the analysis      
+
+       MoskalevCalibrationPlot(data, Target = "NFKBIA")
+       MoskalevCorrection(data, Target = "NFKBIA", n_Control = 13, n_Case = 34)
+    
+    and
+      
+       MethylCalCalibrationOutlierPlot(data, Target = "NFKBIA")
+       MethylCalCorrection(data, Target = "NFKBIA", n_Control = 13, n_Case = 34)
+.
