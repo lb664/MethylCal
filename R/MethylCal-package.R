@@ -1,0 +1,86 @@
+#' MethylCal: Bayesian Calibration of Methylation Levels
+#'
+#' \pkg{MethylCal} calibrates DNA methylation levels measured by bisulfite
+#' amplicon sequencing. PCR amplification introduces a strand- and
+#' methylation-state-dependent bias (PCR bias) that causes the apparent
+#' methylation percentage recorded by the sequencer to deviate from the true
+#' value. \pkg{MethylCal} corrects for this bias using a Bayesian hierarchical
+#' model fitted via Integrated Nested Laplace Approximation (INLA;
+#' \insertCite{Rue2009}{MethylCal}). Unlike one-at-a-time approaches, the model
+#' jointly analyses all CpGs within a Differentially Methylated Region (DMR)
+#' or CpG island, exploiting the shared calibration information across sites.
+#' The calibration curve inversion step, which is called once per sample per
+#' CpG, is implemented in compiled C++ via \pkg{Rcpp} for faster execution.
+#' Reliable suppression of INLA's native-binary diagnostic output is also
+#' handled at the C level, so numerical instability produces a single clean
+#' message rather than raw GSL crash traces.
+#'
+#' @section Workflow:
+#' A typical \pkg{MethylCal} analysis proceeds as follows:
+#' \enumerate{
+#'   \item \strong{Format} the raw data frame with \code{\link{Formatting}}.
+#'   \item \strong{Explore} the calibration experiment with
+#'         \code{\link{ExploratoryPlot}}.
+#'   \item \strong{Calibrate} using one of three methods:
+#'     \itemize{
+#'       \item \code{\link{MethylCalCalibrationPlot}} or
+#'             \code{\link{MethylCalCalibrationOutlierPlot}} for Bayesian INLA
+#'             calibration (with optional outlier detection);
+#'       \item \code{\link{MoskalevCalibrationPlot}} for the cubic polynomial
+#'             regression of \insertCite{Moskalev2011}{MethylCal};
+#'       \item \code{\link{WarneckeCalibrationPlot}} for the hyperbolic model
+#'             of \insertCite{Warnecke1997}{MethylCal}.
+#'     }
+#'   \item \strong{Correct} case and control samples with
+#'         \code{\link{MethylCalCorrection}} or \code{\link{MoskalevCorrection}}.
+#'   \item \strong{Export} the corrected levels to a table with
+#'         \code{\link{TableFormatting}}.
+#' }
+#'
+#' @section Datasets:
+#' Two datasets are bundled with the package:
+#' \itemize{
+#'   \item \code{\link{BWS_data}}: pyrosequencing data from a study of
+#'         Beckwith-Wiedemann syndrome, with five AMPs, 15 healthy controls
+#'         and 18 patients across nine DMRs/CpG islands.
+#'   \item \code{\link{Celiac_data}}: pyrosequencing data from a study of
+#'         celiac disease, with eight AMPs, 13 controls and 34 patient samples
+#'         (at diagnosis and after treatment) across eight NFkB-related genes.
+#' }
+#'
+#' @section Dependencies:
+#' \pkg{MethylCal} depends on \pkg{lattice}, \pkg{latticeExtra}, \pkg{Rcpp},
+#' and \pkg{Rdpack}, all of which are installed automatically from CRAN.
+#' It also depends on \pkg{R-INLA} and \pkg{fmesher}, which must be installed
+#' manually:
+#' \preformatted{
+#' install.packages("fmesher", repos = "https://cloud.r-project.org")
+#' install.packages("INLA",
+#'                  repos = c("https://cloud.r-project.org",
+#'                            INLA = "https://inla.r-inla-download.org/R/stable"),
+#'                  dep = TRUE)
+#' }
+#'
+#' @author Leonardo Bottolo \email{lb664@@cam.ac.uk} (maintainer),
+#'   Verena Zuber \email{v.zuber@@imperial.ac.uk}
+#'
+#' @references \insertRef{Ochoa2019}{MethylCal}
+#' @references \insertRef{Rue2009}{MethylCal}
+#' @references \insertRef{Simpson2017}{MethylCal}
+#' @references \insertRef{Wang2018}{MethylCal}
+#' @references \insertRef{Moskalev2011}{MethylCal}
+#' @references \insertRef{Warnecke1997}{MethylCal}
+#'
+#' @keywords internal
+#'
+#' @useDynLib MethylCal, .registration = TRUE
+#' @importFrom Rcpp evalCpp
+#' @importFrom Rdpack reprompt
+#' @importFrom processx process
+#' @import graphics
+#' @import grDevices
+#' @import lattice
+#' @import latticeExtra
+#' @importFrom stats median predict quantile sd spline
+#' @importFrom utils write.csv
+"_PACKAGE"
