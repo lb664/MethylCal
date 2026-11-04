@@ -1,0 +1,52 @@
+Package: MethylCal
+Title: Bayesian Calibration of Methylation Levels
+Version: 0.2.0
+Authors@R: c(
+    person("Leonardo", "Bottolo", email = "lb664@cam.ac.uk",
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-6381-2327")),
+    person("Verena", "Zuber", email = "v.zuber@imperial.ac.uk",
+           role = c("aut", "ctb"),
+           comment = c(ORCID = "0000-0001-9827-1877"))
+    )
+Description: Calibration of methylation levels using MethylCal, a Bayesian
+    calibration tool based on INLA (Rue et al., 2009,
+    <doi:10.1111/j.1467-9868.2008.00700.x>). The package allows
+    visualisation of the calibration curve derived from standard controls
+    with known methylation percentages for a selected assay, and correction
+    of methylation levels in case and control samples. If case samples are
+    provided, MethylCal performs a differential methylation test to detect
+    hyper- and hypo-methylated samples. The package also includes the
+    calibration and correction methods of Warnecke et al. (1997,
+    <doi:10.1093/nar/25.21.4422>) and Moskalev et al. (2011,
+    <doi:10.1093/nar/gkr213>). See Ochoa et al. (2019,
+    <doi:10.1093/nar/gkz325>) for details. Performance-critical routines
+    are implemented in C++ via Rcpp.
+License: GPL-2 | file LICENSE
+URL: https://github.com/lb664/MethylCal
+BugReports: https://github.com/lb664/MethylCal/issues
+Depends:
+    R (>= 3.5.0)
+Imports:
+    graphics,
+    grDevices,
+    lattice,
+    latticeExtra,
+    processx,
+    Rcpp,
+    Rdpack,
+    stats,
+    tools,
+    utils
+LinkingTo:
+    Rcpp
+Suggests:
+    INLA,
+    knitr,
+    rmarkdown
+Additional_repositories: https://inla.r-inla-download.org/R/stable
+VignetteBuilder: knitr
+Encoding: UTF-8
+LazyData: true
+RdMacros: Rdpack
+Config/roxygen2/version: 8.0.0

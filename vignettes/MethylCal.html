@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Leonardo Bottolo" />
+
+<meta name="date" content="2026-11-04" />
+
+<title>MethylCal: Bayesian Calibration of Methylation Levels</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">MethylCal: Bayesian Calibration of
+Methylation Levels</h1>
+<h4 class="author">Leonardo Bottolo</h4>
+<h4 class="date">2026-11-04</h4>
+
+
+
+<p>This package allows the calibration of methylation levels using
+<strong>MethylCal</strong>, a Bayesian calibration tool based on INLA
+(<a href="https://doi.org/10.1111/j.1467-9868.2008.00700.x">Rue et al.,
+2009</a>). The package permits the visualisation of the calibration
+curve derived from standard controls with known methylation percentages
+for a selected assay. It also allows the correction of methylation
+levels in case and control samples. If case samples are provided,
+MethylCal performs a differential methylation test to detect hyper- and
+hypo-methylated samples. In addition to MethylCal, the package includes
+the calibration and correction provided by two alternative methods (<a href="https://doi.org/10.1093/nar/25.21.4422">Warnecke et al., 1997</a>;
+<a href="https://doi.org/10.1093/nar/gkr213">Moskalev et al.,
+2011</a>).</p>
+<p>This vignette provides a concise description of the package and the
+code required to replicate the plots presented in <a href="https://doi.org/10.1093/nar/gkz325">Ochoa et al. (2019)</a>.</p>
+<div id="structure-of-the-package" class="section level2">
+<h2>Structure of the package</h2>
+<p>Two data sets are included in the package:</p>
+<ol style="list-style-type: decimal">
+<li><p>The first contains methylation data on patients potentially
+affected by the Beckwith–Wiedemann syndrome (BWS). Human genomic control
+DNA with five distinct actual methylation percentages (0%, 25%, 50%,
+75%, and 100%), 15 healthy control DNA samples, and 18 patient DNA
+samples are included. A full description of the BWS data set can be
+accessed by typing</p>
+<pre><code> help(BWS_data)</code></pre></li>
+<li><p>The second data set includes eight NF<span class="math inline">\(\kappa\)</span>B-related genes in patients with
+celiac disease (<a href="https://doi.org/10.1093/hmg/ddt520">Fernandez-Jimenez et al.,
+2014</a>; <a href="https://doi.org/10.4161/epi.22846">Fernandez-Jimenez
+et al., 2012</a>). Human genomic control DNA measured at eight distinct
+actual methylation percentages (0%, 12.5%, 25%, 37.5%, 50%, 62.5%,
+87.5%, and 100%), 13 controls (C), 17 celiac patients at the time of
+diagnosis (D), and the same patients after two years of treatment with a
+gluten-free diet (T) are included. Further information can be obtained
+from</p>
+<pre><code> help(Celiac_data)</code></pre></li>
+</ol>
+<p>The package also contains two utility functions,
+<code>Formatting</code> and <code>TableFormatting</code>. The former
+transforms the data into a format suitable for
+<strong>MethylCal</strong> analysis, while the latter converts the
+output obtained from the calibration and correction functions (see
+below) into the same data format used in the uploaded data sets. Further
+details are presented in</p>
+<pre><code>help(Formatting)
+help(TableFormatting)</code></pre>
+<p>Several functions are available for data exploration and
+analysis:</p>
+<ol style="list-style-type: decimal">
+<li><p>The primary function for data exploration is
+<code>ExploratoryPlot</code>. It visualises the methylation levels of
+the standard control samples. Several plots are generated, stratifying
+the methylation levels with respect to the actual methylation
+percentages (AMP), the CpG position, or both. For details, see</p>
+<pre><code> help(ExploratoryPlot)</code></pre></li>
+<li><p><code>WarneckeCalibrationPlot</code> performs calibration of the
+standard control samples using the method presented in <a href="https://doi.org/10.1093/nar/25.21.4422">Warnecke et
+al. (1997)</a>. Similarly to other calibration functions, several plots
+are generated. In particular, to assess the goodness of fit of the
+estimated calibration curve, a scatter plot depicts the corrected
+methylation levels at each AMP for all CpGs within a targeted
+Differentially Methylated Region (DMR)/CpG island/gene. Details are
+presented in</p>
+<pre><code> help(WarneckeCalibrationPlot)</code></pre></li>
+<li><p>Visualisation of the Moskalev calibration (<a href="https://doi.org/10.1093/nar/gkr213">Moskalev et al., 2011</a>) of
+the standard control experiment is obtained using the function
+<code>MoskalevCalibrationPlot</code>. The online help</p>
+<pre><code> help(MoskalevCalibrationPlot)</code></pre>
+<p>also provides instructions on how to plot the results of the two
+calibration tools (extension of the <a href="https://doi.org/10.1093/nar/25.21.4422">Warnecke et al. (1997)</a>
+method and cubic polynomial regression) presented in <a href="https://doi.org/10.1093/nar/gkr213">Moskalev et
+al. (2011)</a>.</p></li>
+<li><p>MethylCal as presented in <a href="https://doi.org/10.1093/nar/gkz325">Ochoa et al. (2019)</a> is
+implemented in the function <code>MethylCalCalibrationPlot</code>. In
+addition to the calibration plots, several goodness-of-fit measures are
+provided for each estimated model, including: mlik (marginal
+likelihood), DIC (Deviance Information Criterion), and RSS (Residual Sum
+of Squares). The function <code>MethylCalCalibrationOutlierPlot</code>
+includes outlier detection, and the models are refitted after removing
+the detected outliers. Plots are presented with and without outliers.
+Further information is available in</p>
+<pre><code> help(MethylCalCalibrationPlot)
+ help(MethylCalCalibrationOutlierPlot)</code></pre></li>
+<li><p>The main functions for correcting methylation levels in case and
+control samples are <code>MoskalevCorrection</code> and
+<code>MethylCalCorrection</code>. Both functions return the corrected
+methylation levels for the samples analysed. If case samples are
+provided, both functions perform a differential methylation test (at a
+specified confidence level) to detect hyper- and hypo-methylated cases.
+For details, see</p>
+<pre><code> help(MoskalevCorrection)
+ help(MethylCalCorrection)</code></pre></li>
+</ol>
+</div>
+<div id="how-to-generate-the-plots-presented-in-ochoa-et-al.-2019" class="section level2">
+<h2>How to generate the plots presented in Ochoa et al. (2019)</h2>
+<p>Once the <strong>MethylCal</strong> package is loaded</p>
+<pre><code>library(MethylCal)</code></pre>
+<p>the figures presented in <a href="https://doi.org/10.1093/nar/gkz325">Ochoa et al. (2019)</a> are
+obtained using the following commands:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Figure 1</strong> A and B are produced by typing</p>
+<pre><code> data(BWS_data)
+ AMP = c(0, 25, 50, 75, 100)
+ data = Formatting(BWS_data, AMP = AMP)
+ MoskalevCalibrationPlot(data, Target = &quot;KCNQ1OT1&quot;)
+ MoskalevCalibrationPlot(data, Target = &quot;H19/IGF2&quot;)</code></pre>
+<p>and selecting the 1st, 2nd, and 3rd plot for each targeted
+DMR.</p></li>
+<li><p><strong>Figure 2</strong> is generated with</p>
+<pre><code> MethylCalCalibrationOutlierPlot(data, Target = &quot;KCNQ1OT1&quot;)
+ MethylCalCalibrationOutlierPlot(data, Target = &quot;H19/IGF2&quot;)</code></pre>
+<p>Since MethylCal detects two outliers in the targeted DMR H19/IGF2,
+running the analysis for this DMR may take several minutes.</p></li>
+<li><p>To generate <strong>Figure 3</strong> A and B, the case/control
+samples must first be loaded:</p>
+<pre><code> data = Formatting(BWS_data, AMP = AMP, n_Control = 15, n_Case = 18)</code></pre>
+<p>then</p>
+<pre><code> MoskalevCorrection(data, Target = &quot;KCNQ1OT1&quot;, n_Control = 15, n_Case = 18)</code></pre>
+<p>Similarly, for <strong>Figure 3</strong> C and D:</p>
+<pre><code> MethylCalCorrection(data, Target = &quot;KCNQ1OT1&quot;, n_Control = 15, n_Case = 18)</code></pre>
+<p>For both <code>MoskalevCorrection</code> and
+<code>MethylCalCorrection</code>, the list of hyper- and hypo-methylated
+cases detected by the differential methylation test (at the specified
+confidence level) is printed to the console.</p></li>
+<li><p>To generate <strong>Figure 4</strong>, the commands are</p>
+<pre><code> corr_data = MoskalevCorrection(data, Target = &quot;H19/IGF2&quot;,
+                                n_Control = 15, n_Case = 18)
+ corr_data = MethylCalCorrection(data, Target = &quot;H19/IGF2&quot;,
+                                 n_Control = 15, n_Case = 18)</code></pre>
+<p>The function output <code>corr_data</code> can be used to generate a
+table of the corrected methylation levels for both case and control
+samples, in the same data format as the input data set, using</p>
+<pre><code> output_data = TableFormatting(corr_data, n_Control = 15, n_Case = 18)</code></pre></li>
+<li><p>Finally, for <strong>Figure 5</strong>, the celiac data set must
+first be loaded, specifying the AMP list and formatting the data for the
+analysis, including the number of case and control samples:</p>
+<pre><code> data(Celiac_data)
+ AMP = c(0, 12.5, 25, 37.5, 50, 62.5, 87.5, 100)
+ data = Formatting(Celiac_data, AMP = AMP, n_Control = 13, n_Case = 34)</code></pre>
+<p>before running the analysis</p>
+<pre><code> MoskalevCalibrationPlot(data, Target = &quot;NFKBIA&quot;)
+ MoskalevCorrection(data, Target = &quot;NFKBIA&quot;, n_Control = 13, n_Case = 34)</code></pre>
+<p>and</p>
+<pre><code> MethylCalCalibrationOutlierPlot(data, Target = &quot;NFKBIA&quot;)
+ MethylCalCorrection(data, Target = &quot;NFKBIA&quot;, n_Control = 13, n_Case = 34)</code></pre></li>
+</ol>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
